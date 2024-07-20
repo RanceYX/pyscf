@@ -218,7 +218,31 @@ class GCCSD(ccsd.CCSDBase):
     def eeccsd(self, nroots=1, koopmans=False, guess=None, eris=None):
         from pyscf.cc import eom_gccsd
         return eom_gccsd.EOMEE(self).kernel(nroots, koopmans, guess, eris)
+    
+    def lrccsd(self, oprA, oprB, mo_coeff, omega,  
+                t1=None, t2=None, l1=None, l2=None, eris=None):
+        from pyscf.cc import lr_gccsd
+        if t1 is None: t1 = self.t1
+        if t2 is None: t2 = self.t2
+        if l1 is None: l1 = self.l1
+        if l2 is None: l2 = self.l2
+        if l1 is None: 
+            l1, l2 = self.solve_lambda(t1, t2)
+            self.l1 = l1
+            self.l2 = l2
 
+        self.t1 = self.t1.astype(np.complex128)
+        self.t2 = self.t2.astype(np.complex128)
+        self.l1 = self.l1.astype(np.complex128)
+        self.l2 = self.l2.astype(np.complex128)
+
+        print('t1 norm: ', np.linalg.norm(self.t1)**2)
+        print('t2 norm: ', (np.linalg.norm(self.t2)/2)**2)
+        print('l1 norm: ', np.linalg.norm(self.l1)**2)
+        print('l2 norm: ', (np.linalg.norm(self.l2)/2)**2)
+
+        return lr_gccsd.LRCCCC(self).kernel(t1, t2, l1, l2, oprA, oprB, mo_coeff, omega, eris)
+    
     def eomip_method(self):
         from pyscf.cc import eom_gccsd
         return eom_gccsd.EOMIP(self)
